@@ -4,6 +4,41 @@ metadata:
   name: cerebro-template
 objects:
 - apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      build: openshift-cerebro
+    name: openshift-cerebro
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: openshift-cerebro:latest
+    source:
+      git:
+        uri: https://github.com/jcantrill/openshift-cerebro
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: openjdk:8-jdk
+      type: Docker
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: openshift-cerebro
+    name: openshift-cerebro
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: openshift-cerebro
+    name: openjdk
+- apiVersion: v1
   kind: Service
   metadata:
     labels:
