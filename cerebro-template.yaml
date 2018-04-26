@@ -16,13 +16,13 @@ objects:
         name: openshift-cerebro:latest
     source:
       git:
-        uri: https://github.com/jcantrill/openshift-cerebro
+        uri: ${BUILD_REPO_URI}
       type: Git
     strategy:
       dockerStrategy:
         from:
-          kind: ImageStreamTag
-          name: openjdk:8-jdk
+          kind: DockerImage
+          name: centos:centos7
       type: Docker
     triggers:
     - type: ConfigChange
@@ -32,12 +32,6 @@ objects:
     labels:
       build: openshift-cerebro
     name: openshift-cerebro
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    labels:
-      build: openshift-cerebro
-    name: openjdk
 - apiVersion: v1
   kind: Service
   metadata:
@@ -94,7 +88,7 @@ objects:
       recreateParams:
         timeoutSeconds: 600
       resources: {}
-      type: Recreate
+      type: Rolling
     template:
       metadata:
         creationTimestamp: null
@@ -106,8 +100,8 @@ objects:
       spec:
         containers:
         - env:
-          - name: PLACEHOLDER
-            value: somevalue
+          - name: ES_CLUSTER_ADDRESS
+            value: ${ELASTICSEARCH_CLUSTER_ADDRESS}
           image: ${IMAGE_PREFIX}/origin-cerebro:${IMAGE_VERSION}
           imagePullPolicy: Always
           name: cerebro
@@ -124,14 +118,13 @@ objects:
         securityContext:
           supplementalGroups:
           - 65534
-        serviceAccount: aggregated-logging-elasticsearch
-        serviceAccountName: aggregated-logging-elasticsearch
+        serviceAccountName: ${SA_NAME}
         terminationGracePeriodSeconds: 30
         volumes:
         - name: es-secrets
           secret:
             defaultMode: 420
-            secretName: logging-elasticsearch
+            secretName: ${SECRETS_NAME}
     test: false
     triggers:
     - type: ConfigChange
@@ -141,4 +134,16 @@ parameters:
   required: true
 - name: IMAGE_VERSION
   value: "latest"
+  required: true
+- name: SA_NAME
+  value: "aggregated-logging-elasticsearch"
+  required: true
+- name: SECRETS_NAME
+  value: "logging-elasticsearch"
+  required: true
+- name: BUILD_REPO_URI
+  value: "https://github.com/jcantrill/openshift-cerebro"
+  required: true
+- name: ELASTICSEARCH_CLUSTER_ADDRESS
+  value: "logging-es"
   required: true
